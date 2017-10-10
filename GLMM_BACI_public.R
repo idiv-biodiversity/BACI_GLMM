@@ -160,12 +160,12 @@ compar.interaction.100
 # (there is an environmental impact)
 
 # ------------------------------
-# II.d.2) For model only with "Snapshot" method of estimating seed predation 
+# II.d.2) For model only with single point ("Snapshot") method of estimating seed predation 
 # This is to indicate that method of estimating pre-dispersal seed predation 
 # does not influence the statistical significance of the BACI effect proven above.
 # ------------------------------ 
 BACI.dt2 <- BACI.dt[Method_F == "Snapshot"] # subset
-# Fit model for "Snapshot" case - model without overdispersion control
+# Fit model for single point ("Snapshot") case - model without overdispersion control
 model.snap <- glmer(CL/NOTAB ~ Period.BA_F*SiteClass.CI_F+
                         (1|Site_F)+(1|Year_F)+(1|Site_F:Year_F), 
                     data = BACI.dt2, weights = NOTAB, family = binomial)
@@ -195,7 +195,7 @@ compar.interaction.100.snap
 ##          stat df   p.value    
 ## LRT    34.903  1 3.466e-09 ***
 ## PBtest 34.903      0.01333 * 
-# Also when using only observations corresponding to "Snapshot" method of estimating seed predation,
+# Also when using only observations corresponding to single point ("Snapshot") method of estimating seed predation,
 # both likelihood ratio and parametric bootstrap tests give significant p-values for BACI effect.
 
 # ===========================================================================
