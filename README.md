@@ -20,7 +20,8 @@ For cloning, run this in a terminal (git should be [installed][4]):
 git clone https://github.com/idiv-biodiversity/BACI_GLMM.git
 ```
 
-First run the script `get_data.r` to download the data from zenodo.org.
+First run the script `get_data.r` to download the data from zenodo.org. 
+The script is doing some renaming of the variable names and of the data file as well so that it corresponds with those in the analysis script `GLMM_BACI_public.R`
 
 ## - Install older versions of R and packages
 
