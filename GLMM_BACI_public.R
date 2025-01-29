@@ -1,12 +1,14 @@
-#############################################################################
-## BACI (Before-After_Control_Impact) design analysis using GLMM frame (Generalized linear mixed model).
-## References are provided in comments and the full list is at the end of this script.
-## Many thanks to Dr. Dylan Craven for his valuable advice about GLMM.
-#############################################################################
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# BACI (Before-After_Control_Impact) design analysis using GLMM frame (Generalized linear mixed model).
+# References are provided in comments and the full list is at the end of this script.
+# Many thanks to Dr. Dylan Craven for his valuable advice about GLMM.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# ===========================================================================
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # I) Attach packages
-# ===========================================================================
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # List of packages to be used in the R session
 .packages = c("lme4", "AICcmodavg", "MuMIn", "pbkrtest",
               "parallel", "data.table", "blmeco", "lsmeans")
@@ -43,16 +45,18 @@ sessionInfo()
 # [15] VGAM_1.0-4       arm_1.9-3        sp_1.2-5         multcomp_1.4-7   TH.data_1.0-8    minqa_1.2.4      codetools_0.2-15
 # [22] splines_3.4.2    abind_1.4-5      unmarked_0.12-2  xtable_1.8-2     sandwich_2.4-0   zoo_1.8-0    
 
-# ==================================================================================
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # II) GLMM fitting
-# ==================================================================================
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Read data
 BACI.dt <- fread("Data/BACI.dt.csv", stringsAsFactors = TRUE)
 BACI.dt[, Year_F := factor(Year_F)] # Year_F needs to be factor
 
-# ----------------------------------------------------------------------------------
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # II.a) Specify fixed and random effects and test for random effects structure.
-# ----------------------------------------------------------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The general model formula with fixed effects is 
 # Predation_ratio ~ Period_BA + SiteClass_CI + Period_BA:SiteClass_CI
 # Note the interaction term Period_BA:SiteClass_CI which is the "BACI effect",
@@ -83,9 +87,10 @@ AIC.res.table
 # AICc suggests to include the term (1|Site_F:Year_F) in the final model,
 # that is, the interaction of random effects.
 
-# ---------------------------------------------------------------------------
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # II.b) Testing for overdispersion in the binomial mixed model
-# ---------------------------------------------------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # "Overdispersion: the occurrence of more variance in the data than predicted by a statistical model." (Bolker, 2009)
 # In case of overdispersed then fit model with observation-level random effects 
 # see Harrison XA (2014) or Harrison XA (2015)
@@ -104,9 +109,10 @@ blmeco::dispersion_glmer(model.full.disp.ctrl)
 # The scale parameter dropped from 1.4 to 1.0;
 # accounting for overdispersion can be justified.
 
-# ---------------------------------------------------------------------------
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # II.c) Check model assumptions (visually)
-# ---------------------------------------------------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 qqnorm(residuals(model.full.disp.ctrl), 
        main = "Q-Q plot - residuals")
 qqline(residuals(model.full.disp.ctrl), col="red")
@@ -128,15 +134,17 @@ scatter.smooth(fitted(model.full.disp.ctrl), BACI.dt$PropCL,
                xlab="Fitted Values", ylab="Observed PropCL")
 abline(0,1, col="red")
 
-# ---------------------------------------------------------------------------
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # II.d) Test for statistical significance of BACI interaction term
-# ---------------------------------------------------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Using a parametric bootstrap comparison between nested models
 # (see Halekoh & Højsgaard 2014 and Bolker, 2009 - supp 1)
 
-# ------------------------------
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # II.d.1) For model with all data points
-# ------------------------------
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Model without the BACI interaction term
 model.no.interaction <- glmer(CL/NOTAB ~ Period.BA_F+SiteClass.CI_F+
                                   (1|Site_F)+(1|Year_F)+(1|Site_F:Year_F)+(1|obs), 
@@ -159,11 +167,12 @@ compar.interaction.100
 # Therefore, the interaction term (the BACI effect) is statistically significant
 # (there is an environmental impact)
 
-# ------------------------------
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # II.d.2) For model only with single point ("Snapshot") method of estimating seed predation 
 # This is to indicate that method of estimating pre-dispersal seed predation 
 # does not influence the statistical significance of the BACI effect proven above.
-# ------------------------------ 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 BACI.dt2 <- BACI.dt[Method_F == "Snapshot"] # subset
 # Fit model for single point ("Snapshot") case - model without overdispersion control
 model.snap <- glmer(CL/NOTAB ~ Period.BA_F*SiteClass.CI_F+
@@ -198,9 +207,10 @@ compar.interaction.100.snap
 # Also when using only observations corresponding to single point ("Snapshot") method of estimating seed predation,
 # both likelihood ratio and parametric bootstrap tests give significant p-values for BACI effect.
 
-# ===========================================================================
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # III) Extract coefficients from final model 
-# ===========================================================================
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 final.model <- model.full.disp.ctrl
 final.model.noIntercept <- update(model.full.disp.ctrl, . ~ . -1)
 # Remove the intercept for extracting group means and their confidence intervals.
@@ -212,7 +222,7 @@ estimates <- lsmeans::lsmeans(final.model.noIntercept, ~ SiteClass.CI_F:Period.B
 # https://stats.stackexchange.com/questions/192062/issue-calculating-adjusted-means-for-glmer-model
 # Confidence level used: 0.95 
 estimates
-## SiteClass.CI_F Period.BA_F       prob         SE df   asymp.LCL asymp.UCL
+# SiteClass.CI_F Period.BA_F       prob         SE df   asymp.LCL asymp.UCL
 ## Control        After       0.52995542 0.09008968 NA 0.356894394 0.6961011
 ## Impact         After       0.02982617 0.01797237 NA 0.009018536 0.0940835
 ## Control        Before      0.73204824 0.08241147 NA 0.545271980 0.8615822
@@ -243,9 +253,11 @@ MuMIn::r.squaredGLMM(final.model)
 # Rm2 = represents the variance explained by fixed factors (Marginal R_GLMM²)
 # R2c = variance explained by both fixed and random factors, i.e. the entire model (Conditional R_GLMM²)
 
-# ===========================================================================
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # REFERENCES
-# ===========================================================================
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # Bolker BM et al. (2009) Generalized linear mixed models: a practical guide for ecology and evolution.
 #   Trends in ecology & evolution 24:127–135
 #   at http://www.sciencedirect.com/science/article/pii/S0169534709000196
@@ -263,6 +275,9 @@ MuMIn::r.squaredGLMM(final.model)
 
 # Schwarz CJ (2015) Analysis of BACI experiments. In Course Notes for Beginning and Intermediate Statistics.
 #   at http://people.stat.sfu.ca/~cschwarz/Stat-650/Notes/PDFbigbook-R/R-part013.pdf
+#   Note that this is not maintained by the stat.sfu.ca anymore. Use https://web.archive.org/ to retrieve it. For example
+#   https://web.archive.org/web/20190107174420/http://people.stat.sfu.ca/~cschwarz/Stat-650/Notes/PDFbigbook-R/R-part013.pdf
 
 # Schielzeth H (2010) Simple means to improve the interpretability of regression coefficients. 
 #   Methods in Ecology and Evolution, 1(2), 103-113.
+#   at https://besjournals.onlinelibrary.wiley.com/doi/pdfdirect/10.1111/j.2041-210X.2010.00012.x
