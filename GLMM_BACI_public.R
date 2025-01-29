@@ -2,6 +2,9 @@
 # BACI (Before-After_Control_Impact) design analysis using GLMM frame (Generalized linear mixed model).
 # References are provided in comments and the full list is at the end of this script.
 # Many thanks to Dr. Dylan Craven for his valuable advice about GLMM.
+#
+# Note also the repository https://github.com/valentinitnelav/Saldur-ROR-analysis
+# There we made use of the more recent package glmmTMB
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
